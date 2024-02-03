@@ -1,13 +1,15 @@
 #include "raylib.h"
 #include "raymath.h"
 #include "Character.h"
+#include "Prop.h"
+#include "Enemy.h"
 
 int main()
 {
 
     // window dimensions
-    const int windowWidth{700};
-    const int windowHeight{500};
+    const int windowWidth{384};
+    const int windowHeight{384};
     InitWindow(windowWidth, windowHeight, "Top Down RPG");
 
     // map
@@ -16,6 +18,15 @@ int main()
     const float mapScale{4.0f};
 
     Character knight{windowWidth, windowHeight};
+
+    Prop props[2]{
+        Prop{Vector2{600.f, 300.f}, LoadTexture("nature_tileset/Rock.png")},
+        Prop{Vector2{400.f, 500.f}, LoadTexture("nature_tileset/Log.png")}};
+
+    Enemy goblin{
+        Vector2{},
+        LoadTexture("characters/goblin_idle_spritesheet.png"),
+        LoadTexture("characters/goblin_run_spritesheet.png")};
 
     SetTargetFPS(60);
 
@@ -32,14 +43,32 @@ int main()
         DrawTextureEx(map, mapPos, 0.0, mapScale, WHITE);
         knight.tick(GetFrameTime());
 
-        //check map bounds
-        if(knight.getWorldPos().x < 0.f || 
+        // draw props
+        for (auto prop : props)
+        {
+            prop.Render(knight.getWorldPos());
+        }
+
+        // check map bounds
+        if (knight.getWorldPos().x < 0.f ||
             knight.getWorldPos().y < 0.f ||
             knight.getWorldPos().x + windowWidth > map.width * mapScale ||
-            knight.getWorldPos().y + windowHeight > map.height * mapScale){
-                
+            knight.getWorldPos().y + windowHeight > map.height * mapScale)
+        {
+            knight.undoMovement();
+        }
+
+        // check prop collisions
+        for (auto prop : props)
+        {
+            if (CheckCollisionRecs(prop.getCollisionRec(knight.getWorldPos()), knight.getCollisionRec()))
+            {
                 knight.undoMovement();
             }
+        }
+
+        //draw goblin
+        goblin.tick(GetFrameTime());
 
         // end Drawing
         EndDrawing();
